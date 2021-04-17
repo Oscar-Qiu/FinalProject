@@ -2,11 +2,39 @@
 //
 
 #include <iostream>
+#include<string>
+#include<fstream>
+#include"QuestionGame.h"
+using namespace std;
 
 
 int main()
 {
-    std::cout << "Hello World!\n";
+	cout << "Welcome to the cse143 question program." << endl;
+	cout << endl;
+	// Create a infile stram to the file
+	ifstream inFile("spec-questions.txt");
+	// Create an output file stream
+	ofstream outFile("OutTest.txt");
+	// Create a QuestionGame Object
+	QuestionGame* question = new QuestionGame;
+	if (question->yesTo("Do you want to read in the previous tree?")) {
+		question->read(inFile);
+	}
+	cout << endl;
+	do {
+		cout << "Please think of an object for me to guess.";
+		question->askQuestions();
+		cout << endl;
+
+
+
+	} while (question->yesTo("Do you want to go again?"));
+	question->write(outFile);
+
+	
+
+
 }
 
 // Run program: Ctrl + F5 or Debug > Start Without Debugging menu
