@@ -6,22 +6,26 @@
 #include<fstream>
 #include"QuestionGame.h"
 using namespace std;
-
+// static const string QUESTION_FILE = "spec-questions.txt";
 
 int main()
 {
-	cout << "Welcome to the cse143 question program." << endl;
+	cout << "Welcome to the 20 questions guessing game program." << endl;
 	cout << endl;
 	// Create a infile stram to the file
-	ifstream inFile("spec-questions.txt");
-	// Create an output file stream
-	ofstream outFile("OutTest.txt");
+	ifstream inFile("big-questions.txt");
+	
 	// Create a QuestionGame Object
 	QuestionGame* question = new QuestionGame;
+
 	if (question->yesTo("Do you want to read in the previous tree?")) {
+		// if the user choose yes, read the tree from the file
 		question->read(inFile);
+		
+		cout << "The number of quesiton passed in are "<<  question->countQuestions();
 	}
 	cout << endl;
+	
 	do {
 		cout << "Please think of an object for me to guess.";
 		question->askQuestions();
@@ -30,7 +34,13 @@ int main()
 
 
 	} while (question->yesTo("Do you want to go again?"));
+	
+	inFile.close();
+	// Create an output file stream
+	ofstream outFile("LargeSet.txt");
 	question->write(outFile);
+	
+	outFile.close();
 
 	
 
