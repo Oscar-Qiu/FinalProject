@@ -2,20 +2,24 @@
 #include<string>
 #include<iostream>
 #include<fstream>
+#include<vector>
+#include<map>
 using namespace std;
 
 struct Node {
 
-	Node* left;
-	Node* right;
+	Node* Yes;
+	Node* No;
 	string text;
 	string question;  // Store two types "A" && " Q "
+	
 
 	Node(string text_) {
 		text = text_;
-		left = nullptr;
-		right = nullptr;
-		question = "A";
+		Yes = nullptr;
+		No = nullptr;
+		question = "A:";
+		
 	}
 
 };
@@ -24,7 +28,8 @@ class QuestionGame
 {
 
 private:
-
+	map<string, int> myMap;
+	int numberOfQuestions;
 	Node* root; // Give the access to the root node
 
 	// Create a helper function to help us delete the memory
@@ -33,8 +38,8 @@ private:
 		// Base case, if the root reaches the nullptr
 		if (curr == nullptr) return;
 		// else traverse the whole tree to delete the node
-		cleanMemory(root->left);
-		cleanMemory(root->right);
+		cleanMemory(root->Yes);
+		cleanMemory(root->No);
 		// Free the memory
 		delete curr;
 		// Set it to nullptr
@@ -44,32 +49,95 @@ private:
 	// Create a helper function to read the file and traverse the whole tree
 	Node* readHelper(Node* root, ifstream& inFile) {
 
-		string lineToRead;
-		// As long as there is a line to read
-		if (getline(inFile, lineToRead)) {
+		string questionType;
+		getline(inFile, questionType);
+		string textToRead;
+		getline(inFile, textToRead);
+		// reassign the value of the root node with the value passed in
+		root = new Node(textToRead);
+		//Update the root's question type
+		root->question = questionType;
 
-			root->text = lineToRead;
-			// if the first character is " Q "
-			if (lineToRead[0] == 'Q') {
-				// Update the question type of the function
-				root->question = "Q";
-				// Recursively call the helper function to build up the tree
-				root->left = readHelper(root->left, inFile);
-				root->right = readHelper(root->right, inFile);
-			}
+		myMap[textToRead] = 1;
+
+		// if the questiontype is equal to Q, we build a tree step by step
+		if (root->question == "Q:") {
+
+			root->Yes = readHelper(root->Yes, inFile);
+			root->No = readHelper(root->No, inFile);
 		}
+
 		return root;
+		
 	}
 	// Create a helper function to output the file and traverse the whole tree
 	void writeHealper(Node* root, ofstream& outFile) {
+
 		if (root == nullptr) return;
 		// Write back the root's data to the file
 		outFile << root->text << endl;
 		// Perform this operation to the whole bst
-		writeHealper(root->left, outFile);
-		writeHealper(root->right, outFile);
+		writeHealper(root->Yes, outFile);
+		writeHealper(root->No, outFile);
 		
 	}
+	Node* askQuestion(Node* root) {
+		
+
+		if (root->question == "A:") {
+
+			if (yesTo("Would your object happen to be " + root->text + "?")) {
+				cout << "Great, I got it right!" << endl;
+			}
+
+			else {
+				cout << "What is the name of your object?";
+				string temp;
+				getline(cin, temp);
+				Node* temp1 = root;
+				cout << "Please give me a yes/no question that" << endl;
+				cout << "distinguishes between your object" << endl;
+				cout << "and mine ----> ";
+				getline(cin, temp);
+				root = new Node(temp);
+				root->question = "Q:";
+				cout << "And what is the answer for your object? (y/n)?";
+				getline(cin, temp);
+
+				if (temp == "y") {
+					root->Yes = new Node(temp);
+					root->Yes->question = "A:";
+					root->No = temp1;
+				}
+				else {
+					root->Yes = temp1;
+					root->No = new Node(temp);
+					root->No->question = "A:";
+				}
+			}
+		}
+		else {
+			if (yesTo(root->text)) {
+				root->Yes = askQuestion(root->Yes);
+			}
+			else {
+				root->No = askQuestion(root->No);
+			}
+		}
+		return root;
+	
+	}
+	string adJustString(string input) {  
+		//change string to Lower case
+		for (int i = 0; input[i] != '\0'; i++) {
+
+			if (input[i] >= 'A' && input[i] <= 'Z') {          // if upper case, change to lower case
+				input[i] += 32;
+			}
+		}
+		return input;
+	}
+	
 	
 public:
 	
@@ -77,8 +145,7 @@ public:
 	QuestionGame() {
 		// Initialize the default root to be computer
 		root = new Node("computer");
-		// Initialize the default quesiton to A
-		root->question = "A";
+		numberOfQuestions = 0;
 
 	}
 
@@ -90,6 +157,22 @@ public:
 
 
 	}
+	int countQuestions() {
+
+		for (auto it = myMap.begin(); it != myMap.end(); it++) {
+			numberOfQuestions++;
+		}
+		return numberOfQuestions;
+	}
+	// Create a vector to store all the question
+	/* void dfs(Node* root, vector<Node*>& ret) {
+		if (root == nullptr) return;
+		ret.push_back(root);
+		dfs(root->left, ret);
+		dfs(root->right, ret);
+
+
+	} */
 
 	void write(ofstream& outFile) {
 		// Call the helper function to output the data
@@ -99,12 +182,37 @@ public:
 		// Call the helper function to clean up the existing tree
 		cleanMemory(root);
 		// Call the helper to read the data passed_in and build the tree
+
 		root = readHelper(root, inFile); // Update the root
 
 
 	}
-	void askQuestions();
-	bool yesTo(string prompt);
+	void askQuestions() {
+
+		Node* finalAnswer = askQuestion(root);
+
+	}
+	bool yesTo(string prompt) {
+
+		cout << prompt + " (y/n)? ";
+		string response;
+		getline(cin, response);
+		response = adJustString(response);
+
+		while (response != "y" && response != "n") {  //while not y/n, keep ask
+			cout << "Please enter y or n " << endl;
+			cout << prompt + " (y/n)? ";
+
+			getline(cin, response);
+			response = adJustString(response);
+		}
+
+		if (response == "y") {
+
+			return true;
+		}
+		return false;
+	}
 
 
 
